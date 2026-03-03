@@ -1,31 +1,27 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base, User
+import os
 
-# 使用 SQLite 資料庫
-DATABASE_URL = "sqlite:///./issues.db"
+def get_user_db_path(username: str):
+    # 為每個使用者建立獨立的 .db 檔案
+    return f"sqlite:///./user_{username}.db"
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def init_db():
+def init_user_db(username: str):
+    db_path = get_user_db_path(username)
+    engine = create_engine(db_path, connect_args={"check_same_thread": False})
     Base.metadata.create_all(bind=engine)
     
-    # 初始化預設客服人員
-    db = SessionLocal()
+    # 為新使用者初始化預設客服人員
+    Session = sessionmaker(bind=engine)
+    db = Session()
     if db.query(User).count() == 0:
         default_users = [
-            User(name="客服小明", email="ming@company.com"),
-            User(name="客服小華", email="hua@company.com"),
-            User(name="主管大壯", email="strong@company.com"),
+            User(name="客服小明", email=f"ming_{username}@company.com"),
+            User(name="客服小華", email=f"hua_{username}@company.com"),
+            User(name="主管大壯", email=f"strong_{username}@company.com"),
         ]
         db.add_all(default_users)
         db.commit()
     db.close()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    return engine, Session
