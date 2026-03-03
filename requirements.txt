@@ -1,0 +1,8 @@
+streamlit
+sqlalchemy
+pandas
+google-genai
+groq
+python-dotenv
+pycryptodome
+plotly
